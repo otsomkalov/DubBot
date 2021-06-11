@@ -1,38 +1,30 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Bot.Data;
 using Bot.Helpers;
-using Bot.Models;
+using Bot.Resources;
 using Bot.Settings;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using User = Bot.Models.User;
 
 namespace Bot.Services
 {
-    public interface IMessageService
+    public class MessageService
     {
-        Task HandleAsync(Message message);
-    }
-    
-    public class MessageService : IMessageService
-    {
-        private readonly AppDbContext _context;
         private readonly ITelegramBotClient _bot;
         private readonly TelegramSettings _telegramSettings;
         private readonly OrderService _orderService;
         private readonly UserService _userService;
+        private readonly IStringLocalizer<Messages> _localizer;
 
-        public MessageService(AppDbContext context, ITelegramBotClient bot, IOptions<TelegramSettings> telegramSettings, OrderService orderService, UserService userService)
+        public MessageService(ITelegramBotClient bot, IOptions<TelegramSettings> telegramSettings, OrderService orderService,
+            UserService userService, IStringLocalizer<Messages> localizer)
         {
-            _context = context;
             _bot = bot;
             _orderService = orderService;
             _userService = userService;
+            _localizer = localizer;
             _telegramSettings = telegramSettings.Value;
         }
 
@@ -46,8 +38,9 @@ namespace Bot.Services
             {
                 var orders = await _orderService.ListAsync();
 
-                await _bot.SendTextMessageAsync(new(message.Chat.Id),
-                    "Select order",
+                await _bot.SendTextMessageAsync(
+                    new(message.Chat.Id),
+                    _localizer[ResourcesNames.SelectOrder],
                     replyMarkup: ReplyMarkupHelpers.GetOrdersMarkup(orders));
                 
                 return;
@@ -64,7 +57,7 @@ namespace Bot.Services
                     {
                         await _bot.SendTextMessageAsync(
                             new(messageUser.Id),
-                            "Wrong data provided. Message template is: /neworder amount price");
+                            _localizer[ResourcesNames.WrongNewOrder]);
                         
                         return;
                     }
@@ -75,7 +68,7 @@ namespace Bot.Services
                 {
                     await _bot.SendTextMessageAsync(
                         new(messageUser.Id),
-                        "You are not allowed to create new orders!");
+                        _localizer[ResourcesNames.NotAuthorized]);
                 }
             }
         }

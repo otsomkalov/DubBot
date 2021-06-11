@@ -40,11 +40,13 @@ namespace Bot
                     return new TelegramBotClient(settings.Token);
                 });
             
-            services.AddScoped<IMessageService, MessageService>()
-                .AddScoped<ICallbackQueryService, CallbackQueryService>()
+            services.AddScoped<MessageService>()
+                .AddScoped<CallbackQueryService, CallbackQueryService>()
                 .AddScoped<OrderService>()
                 .AddScoped<UserService>()
                 .AddScoped<OrderPartService>();
+
+            services.AddLocalization();
             
             services.AddControllers()
                 .AddNewtonsoftJson();
