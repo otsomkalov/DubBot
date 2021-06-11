@@ -9,10 +9,10 @@ namespace Bot.Controllers
     [Route("update")]
     public class UpdateController : ControllerBase
     {
-        private readonly IMessageService _messageService;
-        private readonly ICallbackQueryService _callbackQueryService;
+        private readonly MessageService _messageService;
+        private readonly CallbackQueryService _callbackQueryService;
 
-        public UpdateController(IMessageService messageService, ICallbackQueryService callbackQueryService)
+        public UpdateController(MessageService messageService, CallbackQueryService callbackQueryService)
         {
             _messageService = messageService;
             _callbackQueryService = callbackQueryService;

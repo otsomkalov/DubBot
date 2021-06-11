@@ -40,22 +40,22 @@ namespace Bot.Helpers
                         new InlineKeyboardButton
                         {
                             Text = "+0.15",
-                            CallbackData = $"{orderId}.{Constants.PointFifteenCallbackQueryData}"
+                            CallbackData = $"{orderId}|{Constants.PointFifteenCallbackQueryData}"
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+0.25",
-                            CallbackData = $"{orderId}.{Constants.QuarterCallbackQueryData}"
+                            CallbackData = $"{orderId}|{Constants.QuarterCallbackQueryData}"
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+0.5",
-                            CallbackData = $"{orderId}.{Constants.HalfCallbackQueryData}"
+                            CallbackData = $"{orderId}|{Constants.HalfCallbackQueryData}"
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+1",
-                            CallbackData = $"{orderId}.{Constants.UnitCallbackQueryData}"
+                            CallbackData = $"{orderId}|{Constants.UnitCallbackQueryData}"
                         }
                     },
                     new[]
@@ -63,7 +63,7 @@ namespace Bot.Helpers
                         new InlineKeyboardButton
                         {
                             Text = "Remove latest",
-                            CallbackData = $"{orderId}.{Constants.RemoveLatestCallbackQueryData}"
+                            CallbackData = $"{orderId}|{Constants.RemoveLatestCallbackQueryData}"
                         }
                     }
                 });
