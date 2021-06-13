@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="SelectOrder" xml:space="preserve">
+        <value>Select order from the list below:</value>
+    </data>
+    <data name="WrongNewOrder" xml:space="preserve">
+        <value>Wrong data provided. Message template is: /neworder %amount% %price%</value> 
+    </data>
+    <data name="NotAuthorized" xml:space="preserve">
+        <value>You are not allowed to create new orders!</value>
+    </data>
+    <data name="NoExpenses" xml:space="preserve">
+        <value>You don't have any expenses to remove</value>
+    </data>
+    <data name="Recorded" xml:space="preserve">
+        <value>Recorded</value>
+    </data>
+    <data name="Removed" xml:space="preserve">
+        <value>Recorded</value>
+    </data>
+    <data name="DefaultMessage" xml:space="preserve">
+        <value>
+Order date: *{0}*
+Order amount: *{1}* gr.
+Total amount taken from the current order: *{2}* gr.
+You owe: *{3}* UAH
+Your takeouts:
+{4}
+        </value>
+    </data>
+</root>
