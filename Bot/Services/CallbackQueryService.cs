@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Bot.Data;
 using Bot.Helpers;
 using Bot.Models;
 using Bot.Resources;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -16,56 +19,64 @@ namespace Bot.Services
         private readonly OrderPartService _orderPartService;
         private readonly OrderService _orderService;
         private readonly IStringLocalizer<Messages> _localizer;
+        private readonly AppDbContext _context;
 
         public CallbackQueryService(ITelegramBotClient bot, OrderPartService orderPartService, OrderService orderService,
-            IStringLocalizer<Messages> localizer)
+            IStringLocalizer<Messages> localizer, AppDbContext context)
         {
             _bot = bot;
             _orderPartService = orderPartService;
             _orderService = orderService;
             _localizer = localizer;
+            _context = context;
         }
 
         public async Task HandleAsync(CallbackQuery callbackQuery)
         {
             var callbackQueryUser = callbackQuery.From;
 
-            var callbackQueryData = callbackQuery.Data.Split("|").Select(int.Parse).ToList();
+            var now = DateTime.UtcNow.Date;
 
-            var order = await _orderService.GetAsync(callbackQueryData[0], callbackQueryUser.Id);
+            var daysSinceMonday = now.DayOfWeek - DayOfWeek.Monday;
 
-            if (callbackQueryData.Count == 2)
+            var mondayDate = now.AddDays(daysSinceMonday);
+
+            var orderPartsSinceMonday = await _context.OrderParts
+                .AsNoTracking()
+                .Where(op => op.TakenDate > mondayDate)
+                .Where(op => op.UserId == callbackQueryUser.Id)
+                .OrderByDescending(op => op.TakenDate)
+                .ToListAsync();
+
+            var amountToAdd = callbackQuery.Data switch
             {
-                var amountToAdd = callbackQueryData[1] switch
+                Constants.PointFifteenCallbackQueryData => 0.15M,
+                Constants.QuarterCallbackQueryData => 0.25M,
+                Constants.HalfCallbackQueryData => 0.5M,
+                Constants.UnitCallbackQueryData => 1M,
+                _ => decimal.Zero
+            };
+            
+            if (amountToAdd == decimal.Zero)
+            {
+                var latestForUser = order.OrderParts.FirstOrDefault();
+
+                if (latestForUser == null)
                 {
-                    Constants.UnitCallbackQueryData => 1M,
-                    Constants.HalfCallbackQueryData => 0.5M,
-                    Constants.QuarterCallbackQueryData => 0.25M,
-                    Constants.PointFifteenCallbackQueryData => 0.15M,
-                    _ => decimal.Zero
-                };
-
-                if (amountToAdd == decimal.Zero)
-                {
-                    var latestForUser = order.OrderParts.FirstOrDefault();
-
-                    if (latestForUser == null)
-                    {
-                        await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.NoExpenses]);
-                    }
-                    else
-                    {
-                        await _orderPartService.RemoveAsync(latestForUser);
-
-                        await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Removed]);
-                    }
+                    await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.NoExpenses]);
                 }
                 else
                 {
-                    await _orderPartService.CreateAsync(callbackQueryUser.Id, amountToAdd, order.Id);
+                    await _orderPartService.RemoveAsync(latestForUser);
 
-                    await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Recorded]);
+                    await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Removed]);
                 }
+            }
+            else
+            {
+                await _orderPartService.CreateAsync(callbackQueryUser.Id, amountToAdd, order.Id);
+
+                await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Recorded]);
             }
 
             order = await _orderService.GetAsync(callbackQueryData[0], callbackQueryUser.Id);
