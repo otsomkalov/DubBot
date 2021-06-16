@@ -68,7 +68,8 @@ namespace Bot.Services
                 {
                     await _bot.SendTextMessageAsync(
                         new ChatId(userId),
-                        )
+                        
+                        , cancellationToken: stoppingToken)
                 }
                 
                 var daysUntilMonday = (DayOfWeek.Monday - now.DayOfWeek + 7) % 7;

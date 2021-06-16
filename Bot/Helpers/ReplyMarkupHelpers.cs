@@ -30,7 +30,7 @@ namespace Bot.Helpers
             return new(buttonsRows);
         }
 
-        public static InlineKeyboardMarkup GetAmountsMarkup(int orderId)
+        public static InlineKeyboardMarkup GetAmountsMarkup()
         {
             return new(
                 new[]
@@ -40,22 +40,22 @@ namespace Bot.Helpers
                         new InlineKeyboardButton
                         {
                             Text = "+0.15",
-                            CallbackData = $"{orderId}|{Constants.PointFifteenCallbackQueryData}"
+                            CallbackData = Constants.PointFifteenCallbackQueryData
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+0.25",
-                            CallbackData = $"{orderId}|{Constants.QuarterCallbackQueryData}"
+                            CallbackData = Constants.QuarterCallbackQueryData
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+0.5",
-                            CallbackData = $"{orderId}|{Constants.HalfCallbackQueryData}"
+                            CallbackData = Constants.HalfCallbackQueryData
                         },
                         new InlineKeyboardButton
                         {
                             Text = "+1",
-                            CallbackData = $"{orderId}|{Constants.UnitCallbackQueryData}"
+                            CallbackData = Constants.UnitCallbackQueryData
                         }
                     },
                     new[]
@@ -63,7 +63,7 @@ namespace Bot.Helpers
                         new InlineKeyboardButton
                         {
                             Text = "Remove latest",
-                            CallbackData = $"{orderId}|{Constants.RemoveLatestCallbackQueryData}"
+                            CallbackData = Constants.RemoveLatestCallbackQueryData
                         }
                     }
                 });

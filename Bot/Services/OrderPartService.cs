@@ -31,17 +31,18 @@ namespace Bot.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task CreateAsync(int id, decimal amount, int orderId)
+        public async Task<OrderPart> CreateAsync(int id, decimal amount, int orderId)
         {
-            await _context.AddAsync(
-                new OrderPart
-                {
-                    UserId = id,
-                    Amount = amount,
-                    OrderId = orderId
-                });
+            var createdEntity = await _context.AddAsync(new OrderPart
+            {
+                UserId = id,
+                Amount = amount,
+                OrderId = orderId
+            });
 
             await _context.SaveChangesAsync();
+
+            return createdEntity.Entity;
         }
     }
 }

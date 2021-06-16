@@ -38,12 +38,8 @@
     </data>
     <data name="DefaultMessage" xml:space="preserve">
         <value>
-Order date: *{0}*
-Order amount: *{1}* gr.
-Total amount taken from the current order: *{2}* gr.
-You owe: *{3}* UAH
-Your takeouts:
-{4}
+Your takeouts since {0}:
+{1}
         </value>
     </data>
 </root>

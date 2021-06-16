@@ -62,12 +62,8 @@ namespace Bot.Resources {
         
         /// <summary>
         ///   Looks up a localized string similar to 
-        ///Order date: *{0}*
-        ///Order amount: *{1}* gr.
-        ///Total amount taken from the current order: *{2}* gr.
-        ///You owe: *{3}* UAH
-        ///Your takeouts:
-        ///{4}
+        ///Your takeouts since {0}:
+        ///{1}
         ///        .
         /// </summary>
         internal static string DefaultMessage {

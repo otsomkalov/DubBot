@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Bot.Data;
 using Bot.Helpers;
@@ -37,17 +38,36 @@ namespace Bot.Services
 
             var now = DateTime.UtcNow.Date;
 
-            var daysSinceMonday = now.DayOfWeek - DayOfWeek.Monday;
+            var daysSinceSunday = now.DayOfWeek - DayOfWeek.Sunday;
 
-            var mondayDate = now.AddDays(daysSinceMonday);
+            var sundayDate = now.AddDays(daysSinceSunday);
 
-            var orderPartsSinceMonday = await _context.OrderParts
+            var orderPartsSinceSunday = await _context.OrderParts
                 .AsNoTracking()
-                .Where(op => op.TakenDate > mondayDate)
+                .Include(op => op.Order)
+                .Where(op => op.TakenDate > sundayDate)
                 .Where(op => op.UserId == callbackQueryUser.Id)
-                .OrderByDescending(op => op.TakenDate)
-                .ToListAsync();
+                .OrderBy(op => op.TakenDate)
+                .GroupBy(op => op.Order)
+                .ToDictionaryAsync(gr => gr.Key, gr => gr);
 
+            var messageBuilder = new StringBuilder();
+
+            foreach (var (order, orderParts) in orderPartsSinceSunday)
+            {
+                var pricePerGram = order.Price / order.Amount;
+
+                foreach (var orderPart in orderParts)
+                {
+                    messageBuilder.Append($"{orderPart.TakenDate:dd-MM HH:mm} - {orderPart.Amount} g.")
+                }
+            }
+
+            var latestOrder = await _context.Orders
+                .AsNoTracking()
+                .OrderByDescending(o => o.OrderDate)
+                .FirstOrDefaultAsync();
+            
             var amountToAdd = callbackQuery.Data switch
             {
                 Constants.PointFifteenCallbackQueryData => 0.15M,
@@ -59,7 +79,7 @@ namespace Bot.Services
             
             if (amountToAdd == decimal.Zero)
             {
-                var latestForUser = order.OrderParts.FirstOrDefault();
+                var latestForUser = orderPartsSinceSunday.LastOrDefault();
 
                 if (latestForUser == null)
                 {
@@ -70,21 +90,20 @@ namespace Bot.Services
                     await _orderPartService.RemoveAsync(latestForUser);
 
                     await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Removed]);
+
+                    orderPartsSinceSunday.Remove(latestForUser);
                 }
             }
             else
             {
-                await _orderPartService.CreateAsync(callbackQueryUser.Id, amountToAdd, order.Id);
+                var createdOrderPart = await _orderPartService.CreateAsync(callbackQueryUser.Id, amountToAdd, latestOrder.Id);
 
                 await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Recorded]);
+                
+                orderPartsSinceSunday.Add(createdOrderPart);
             }
 
-            order = await _orderService.GetAsync(callbackQueryData[0], callbackQueryUser.Id);
-
-            var totalTaken = order.OrderParts.Sum(op => op.Amount);
-            var totalOwe = order.Price / order.Amount * totalTaken;
-
-            var takeouts = string.Join('\n', order.OrderParts.Select(op => $"{op.TakenDate:dd-MM HH:mm} - *{op.Amount}*"));
+            var takeouts = string.Join('\n', orderPartsSinceSunday.Select(op => $"{op.TakenDate:dd-MM HH:mm} - *{op.Amount}*"));
 
             if (string.IsNullOrEmpty(takeouts))
             {
@@ -95,13 +114,10 @@ namespace Bot.Services
                 callbackQuery.Message.MessageId, 
                 string.Format(
                     _localizer[ResourcesNames.DefaultMessage],
-                    order.OrderDate.ToString("dd-MM"),
-                    order.Amount,
-                    totalTaken,
-                    totalOwe, 
+                    sundayDate.ToString("dd-MM"),
                     takeouts),
                 ParseMode.Markdown,
-                replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup(order.Id));
+                replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup());
         }
     }
 }
