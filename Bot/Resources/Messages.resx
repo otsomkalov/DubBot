@@ -38,12 +38,16 @@
     </data>
     <data name="DefaultMessage" xml:space="preserve">
         <value>
-Order date: *{0}*
-Order amount: *{1}* gr.
-Total amount taken from the current order: *{2}* gr.
-You owe: *{3}* UAH
-Your takeouts:
-{4}
+Your takeouts since last Sunday:
+{0}
+Week takeouts amount: *{1}* gr.
+Week debt: *{2}* UAH
         </value>
+    </data>
+    <data name="TakeoutInfo" xml:space="preserve">
+        <value>{0}: {1} gr. = *{2}* UAH</value>
+    </data>
+    <data name="OrderCreated" xml:space="preserve">
+        <value>Created!</value>
     </data>
 </root>

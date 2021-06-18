@@ -1,4 +1,5 @@
 using Bot.Data;
+using Bot.Jobs;
 using Bot.Services;
 using Bot.Settings;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
+using Quartz;
 using Telegram.Bot;
 
 [assembly: ApiController]
@@ -34,22 +35,36 @@ namespace Bot
 
             services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName));
 
-            services.AddSingleton<ITelegramBotClient>(
-                provider =>
-                {
-                    var settings = provider.GetService<IOptions<TelegramSettings>>().Value;
+            services.AddSingleton<ITelegramBotClient>(provider =>
+            {
+                var settings = provider.GetService<IOptions<TelegramSettings>>()!.Value;
 
-                    return new TelegramBotClient(settings.Token);
-                });
-            
+                return new TelegramBotClient(settings.Token);
+            });
+
             services.AddScoped<MessageService>()
                 .AddScoped<CallbackQueryService, CallbackQueryService>()
                 .AddScoped<OrderService>()
                 .AddScoped<UserService>()
-                .AddScoped<OrderPartService>();
+                .AddScoped<TakeoutService>();
 
             services.AddLocalization();
-            
+
+            services.AddQuartz(quartzConfigurator =>
+            {
+                quartzConfigurator.UseMicrosoftDependencyInjectionScopedJobFactory();
+
+                var jobKey = new JobKey(nameof(NotifierJob));
+
+                quartzConfigurator.AddJob<NotifierJob>(jobKey);
+
+                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(jobKey)
+                    .WithIdentity(nameof(NotifierJob))
+                    .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(NotifierJob)}"]));
+            });
+
+            services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
             services.AddControllers()
                 .AddNewtonsoftJson();
         }
@@ -61,8 +76,6 @@ namespace Bot
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 

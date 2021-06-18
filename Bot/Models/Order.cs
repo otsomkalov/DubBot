@@ -11,6 +11,6 @@ namespace Bot.Models
 
         public decimal Price { get; set; }
 
-        public virtual IEnumerable<OrderPart> OrderParts { get; set; }
+        public virtual IEnumerable<Takeout> Takeouts { get; set; }
     }
 }
