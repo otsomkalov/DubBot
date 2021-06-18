@@ -8,10 +8,10 @@ namespace Bot.Data
     {
         public DbSet<User> Users { get; set; }
 
-        public DbSet<OrderPart> OrderParts { get; set; }
+        public DbSet<Takeout> Takeouts { get; set; }
 
         public DbSet<Order> Orders { get; set; }
-        
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }

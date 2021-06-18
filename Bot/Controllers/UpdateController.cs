@@ -9,8 +9,8 @@ namespace Bot.Controllers
     [Route("update")]
     public class UpdateController : ControllerBase
     {
-        private readonly MessageService _messageService;
         private readonly CallbackQueryService _callbackQueryService;
+        private readonly MessageService _messageService;
 
         public UpdateController(MessageService messageService, CallbackQueryService callbackQueryService)
         {
@@ -24,7 +24,7 @@ namespace Bot.Controllers
             {
                 await _messageService.HandleAsync(update.Message);
             }
-            
+
             if (update.Type == UpdateType.CallbackQuery)
             {
                 await _callbackQueryService.HandleAsync(update.CallbackQuery);

@@ -20,19 +20,18 @@ namespace Bot.Services
         public async Task<Order> GetLatestForUserAsync(User user)
         {
             return await _context.Orders
-                .Include(o => o.OrderParts.Where(op => op.UserId == user.Id).OrderByDescending(op => op.TakenDate))
+                .Include(o => o.Takeouts.Where(op => op.UserId == user.Id).OrderByDescending(op => op.Date))
                 .OrderByDescending(o => o.OrderDate)
-                .FirstOrDefaultAsync();       
+                .FirstOrDefaultAsync();
         }
 
         public async Task CreateAsync(decimal amount, decimal price)
         {
-            await _context.AddAsync(
-                new Order
-                {
-                    Amount = amount,
-                    Price = price
-                });
+            await _context.AddAsync(new Order
+            {
+                Amount = amount,
+                Price = price
+            });
 
             await _context.SaveChangesAsync();
         }
@@ -49,8 +48,16 @@ namespace Bot.Services
         {
             return _context.Orders
                 .AsNoTracking()
-                .Include(o => o.OrderParts.Where(op => op.UserId == userId).OrderByDescending(op => op.TakenDate))
+                .Include(o => o.Takeouts.Where(op => op.UserId == userId).OrderByDescending(op => op.Date))
                 .SingleOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<Order> GetLatestAsync()
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .OrderByDescending(o => o.OrderDate)
+                .FirstOrDefaultAsync();
         }
     }
 }

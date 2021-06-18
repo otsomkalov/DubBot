@@ -62,8 +62,10 @@ namespace Bot.Resources {
         
         /// <summary>
         ///   Looks up a localized string similar to 
-        ///Your takeouts since {0}:
-        ///{1}
+        ///Your takeouts since last Sunday:
+        ///{0}
+        ///Week takeouts amount: *{1}* gr.
+        ///Week debt: *{2}* UAH
         ///        .
         /// </summary>
         internal static string DefaultMessage {
@@ -91,6 +93,15 @@ namespace Bot.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Created!.
+        /// </summary>
+        internal static string OrderCreated {
+            get {
+                return ResourceManager.GetString("OrderCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recorded.
         /// </summary>
         internal static string Recorded {
@@ -114,6 +125,15 @@ namespace Bot.Resources {
         internal static string SelectOrder {
             get {
                 return ResourceManager.GetString("SelectOrder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} gr. = *{2}* UAH.
+        /// </summary>
+        internal static string TakeoutInfo {
+            get {
+                return ResourceManager.GetString("TakeoutInfo", resourceCulture);
             }
         }
         
