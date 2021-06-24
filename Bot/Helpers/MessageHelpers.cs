@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Bot.Models;
@@ -27,8 +28,8 @@ namespace Bot.Helpers
 
                     messageBuilder.AppendLine(string.Format(localizer[ResourcesNames.TakeoutInfo],
                         takeout.Date.ToString("dd-MM HH:mm"),
-                        takeout.Amount,
-                        takeoutPrice));
+                        Math.Round(takeout.Amount, 2),
+                        Math.Round(takeoutPrice, 2)));
                 }
             }
             else
@@ -38,8 +39,8 @@ namespace Bot.Helpers
 
             return string.Format(localizer[ResourcesNames.DefaultMessage],
                 messageBuilder,
-                totalTaken,
-                totalOwe);
+                Math.Round(totalTaken, 2),
+                Math.Round(totalOwe, 2));
         }
     }
 }
