@@ -54,13 +54,19 @@ namespace Bot
             {
                 quartzConfigurator.UseMicrosoftDependencyInjectionScopedJobFactory();
 
-                var jobKey = new JobKey(nameof(NotifierJob));
+                var notifierKey = new JobKey(nameof(NotifierJob));
+                var splitwiseExporterKey = new JobKey(nameof(SplitwiseExporterJob));
 
-                quartzConfigurator.AddJob<NotifierJob>(jobKey);
+                quartzConfigurator.AddJob<NotifierJob>(notifierKey);
+                quartzConfigurator.AddJob<SplitwiseExporterJob>(splitwiseExporterKey);
 
-                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(jobKey)
+                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(notifierKey)
                     .WithIdentity(nameof(NotifierJob))
                     .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(NotifierJob)}"]));
+                
+                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(splitwiseExporterKey)
+                    .WithIdentity(nameof(SplitwiseExporterJob))
+                    .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(SplitwiseExporterJob)}"]));
             });
 
             services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);

@@ -40,8 +40,7 @@ namespace Bot.Jobs
                 await _bot.SendTextMessageAsync(
                     new(user.Id),
                     _localizer.GetTakeoutsMessage(takeoutsSinceSunday),
-                    ParseMode.Markdown,
-                    replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup());
+                    ParseMode.Markdown);
             }
         }
     }
