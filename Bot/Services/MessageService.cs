@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Bot.Extensions;
 using Bot.Helpers;
 using Bot.Resources;
 using Bot.Settings;

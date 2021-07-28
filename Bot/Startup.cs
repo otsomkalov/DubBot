@@ -1,4 +1,5 @@
 using Bot.Data;
+using Bot.Extensions;
 using Bot.Jobs;
 using Bot.Services;
 using Bot.Settings;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Quartz;
+using Splitwise.Clients;
+using Splitwise.Clients.Interfaces;
 using Telegram.Bot;
 
 [assembly: ApiController]
@@ -28,6 +31,8 @@ namespace Bot
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var splitwiseSettings = _configuration.GetSection(SplitwiseSettings.SectionName).Get<SplitwiseSettings>();
+
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseNpgsql(_configuration.GetConnectionString(DatabaseSettings.ConnectionStringName));
@@ -50,23 +55,14 @@ namespace Bot
 
             services.AddLocalization();
 
+            services.AddSingleton<SplitwiseClient>(_ => new(splitwiseSettings.Key));
+
             services.AddQuartz(quartzConfigurator =>
             {
                 quartzConfigurator.UseMicrosoftDependencyInjectionScopedJobFactory();
 
-                var notifierKey = new JobKey(nameof(NotifierJob));
-                var splitwiseExporterKey = new JobKey(nameof(SplitwiseExporterJob));
-
-                quartzConfigurator.AddJob<NotifierJob>(notifierKey);
-                quartzConfigurator.AddJob<SplitwiseExporterJob>(splitwiseExporterKey);
-
-                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(notifierKey)
-                    .WithIdentity(nameof(NotifierJob))
-                    .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(NotifierJob)}"]));
-                
-                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(splitwiseExporterKey)
-                    .WithIdentity(nameof(SplitwiseExporterJob))
-                    .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(SplitwiseExporterJob)}"]));
+                quartzConfigurator.AddCronJob<NotifierJob>(_configuration)
+                    .AddCronJob<SplitwiseExporterJob>(_configuration);
             });
 
             services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);

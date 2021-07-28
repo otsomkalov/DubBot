@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Bot.Helpers
+namespace Bot.Extensions
 {
-    public static class DateTimeHelpers
+    public static class DateTimeExtensions
     {
         public static DateTime GetLastSunday(this DateTime dateTime)
         {

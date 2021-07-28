@@ -1,4 +1,5 @@
 ﻿using System;
+using Bot.Extensions;
 using Bot.Helpers;
 using Xunit;
 
