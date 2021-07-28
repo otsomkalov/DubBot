@@ -42,7 +42,7 @@ namespace Bot
 
             services.AddSingleton<ITelegramBotClient>(provider =>
             {
-                var settings = provider.GetService<IOptions<TelegramSettings>>()!.Value;
+                var settings = provider.GetRequiredService<IOptions<TelegramSettings>>().Value;
 
                 return new TelegramBotClient(settings.Token);
             });
@@ -55,7 +55,12 @@ namespace Bot
 
             services.AddLocalization();
 
-            services.AddSingleton<SplitwiseClient>(_ => new(splitwiseSettings.Key));
+            services.AddSingleton<SplitwiseClient>(provider =>
+            {
+                var settings = provider.GetRequiredService<IOptions<SplitwiseSettings>>().Value;
+
+                return new(settings.Key);
+            });
 
             services.AddQuartz(quartzConfigurator =>
             {

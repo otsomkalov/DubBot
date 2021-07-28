@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Bot.Extensions;
 using Bot.Services;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using Splitwise.Clients;
-using Splitwise.Clients.Interfaces;
 using Splitwise.Requests.Expense;
 
 namespace Bot.Jobs
@@ -15,12 +15,15 @@ namespace Bot.Jobs
         private readonly SplitwiseClient _splitwiseClient;
         private readonly UserService _userService;
         private readonly TakeoutService _takeoutService;
+        private readonly ILogger<SplitwiseExporterJob> _logger;
 
-        public SplitwiseExporterJob(SplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService)
+        public SplitwiseExporterJob(SplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
+            ILogger<SplitwiseExporterJob> logger)
         {
             _splitwiseClient = splitwiseClient;
             _userService = userService;
             _takeoutService = takeoutService;
+            _logger = logger;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -63,7 +66,14 @@ namespace Bot.Jobs
 
             createExpenseRequest.Cost = cost;
 
-            var result = await _splitwiseClient.Expense.CreateAsync(createExpenseRequest);
+            try
+            {
+                var result = await _splitwiseClient.Expense.CreateAsync(createExpenseRequest);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error during creating expense:");
+            }
         }
     }
 }

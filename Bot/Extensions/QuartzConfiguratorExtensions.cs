@@ -6,7 +6,8 @@ namespace Bot.Extensions
 {
     public static class QuartzConfiguratorExtensions
     {
-        public static IServiceCollectionQuartzConfigurator AddCronJob<TJob>(this IServiceCollectionQuartzConfigurator quartzConfigurator, IConfiguration configuration) where TJob : IJob
+        public static IServiceCollectionQuartzConfigurator AddCronJob<TJob>(this IServiceCollectionQuartzConfigurator quartzConfigurator,
+            IConfiguration configuration) where TJob : IJob
         {
             var jobType = typeof(TJob);
             var jobKey = new JobKey(jobType.Name);
