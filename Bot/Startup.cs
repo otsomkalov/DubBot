@@ -10,13 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Quartz;
-using Splitwise.Clients;
-using Splitwise.Clients.Interfaces;
-using Telegram.Bot;
 
 [assembly: ApiController]
+
 namespace Bot
 {
     public class Startup
@@ -31,21 +28,16 @@ namespace Bot
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var splitwiseSettings = _configuration.GetSection(SplitwiseSettings.SectionName).Get<SplitwiseSettings>();
-
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseNpgsql(_configuration.GetConnectionString(DatabaseSettings.ConnectionStringName));
             });
 
-            services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName));
+            services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName))
+                .Configure<SplitwiseSettings>(_configuration.GetSection(SplitwiseSettings.SectionName));
 
-            services.AddSingleton<ITelegramBotClient>(provider =>
-            {
-                var settings = provider.GetRequiredService<IOptions<TelegramSettings>>().Value;
-
-                return new TelegramBotClient(settings.Token);
-            });
+            services.AddTelegram()
+                .AddSplitwise();
 
             services.AddScoped<MessageService>()
                 .AddScoped<CallbackQueryService, CallbackQueryService>()
@@ -54,13 +46,6 @@ namespace Bot
                 .AddScoped<TakeoutService>();
 
             services.AddLocalization();
-
-            services.AddSingleton<SplitwiseClient>(provider =>
-            {
-                var settings = provider.GetRequiredService<IOptions<SplitwiseSettings>>().Value;
-
-                return new(settings.Key);
-            });
 
             services.AddQuartz(quartzConfigurator =>
             {

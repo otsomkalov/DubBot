@@ -1,10 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Bot.Extensions;
 using Bot.Services;
 using Microsoft.Extensions.Logging;
 using Quartz;
-using Splitwise.Clients;
+using Splitwise.Clients.Interfaces;
 using Splitwise.Requests.Expense;
 
 namespace Bot.Jobs
@@ -12,12 +13,12 @@ namespace Bot.Jobs
     [DisallowConcurrentExecution]
     public class SplitwiseExporterJob : IJob
     {
-        private readonly SplitwiseClient _splitwiseClient;
-        private readonly UserService _userService;
-        private readonly TakeoutService _takeoutService;
         private readonly ILogger<SplitwiseExporterJob> _logger;
+        private readonly ISplitwiseClient _splitwiseClient;
+        private readonly TakeoutService _takeoutService;
+        private readonly UserService _userService;
 
-        public SplitwiseExporterJob(SplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
+        public SplitwiseExporterJob(ISplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
             ILogger<SplitwiseExporterJob> logger)
         {
             _splitwiseClient = splitwiseClient;
@@ -69,6 +70,18 @@ namespace Bot.Jobs
             try
             {
                 var result = await _splitwiseClient.Expense.CreateAsync(createExpenseRequest);
+
+                if (result.IsFailed)
+                {
+                    _logger.LogError(string.Join('\n', result.Errors.Select(e => e.Message)));
+                }
+                else
+                {
+                    if (result.Value.Errors?.Base?.Any() == true)
+                    {
+                        _logger.LogError(string.Join('\n', result.Value.Errors.Base));
+                    }
+                }
             }
             catch (Exception e)
             {
