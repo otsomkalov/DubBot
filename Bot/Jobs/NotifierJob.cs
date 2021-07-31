@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Bot.Extensions;
 using Bot.Helpers;
 using Bot.Resources;
 using Bot.Services;
@@ -40,8 +41,7 @@ namespace Bot.Jobs
                 await _bot.SendTextMessageAsync(
                     new(user.Id),
                     _localizer.GetTakeoutsMessage(takeoutsSinceSunday),
-                    ParseMode.Markdown,
-                    replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup());
+                    ParseMode.Markdown);
             }
         }
     }

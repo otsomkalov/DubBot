@@ -1,5 +1,5 @@
 ﻿using System;
-using Bot.Helpers;
+using Bot.Extensions;
 using Xunit;
 
 namespace Bot.Tests.Helpers

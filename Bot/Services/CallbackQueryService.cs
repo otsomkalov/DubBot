@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Bot.Extensions;
 using Bot.Helpers;
 using Bot.Models;
 using Bot.Resources;

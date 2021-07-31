@@ -1,4 +1,5 @@
 using Bot.Data;
+using Bot.Extensions;
 using Bot.Jobs;
 using Bot.Services;
 using Bot.Settings;
@@ -9,11 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Quartz;
-using Telegram.Bot;
 
 [assembly: ApiController]
+
 namespace Bot
 {
     public class Startup
@@ -33,14 +33,13 @@ namespace Bot
                 options.UseNpgsql(_configuration.GetConnectionString(DatabaseSettings.ConnectionStringName));
             });
 
-            services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName));
+            services.AddApplicationInsightsTelemetry();
 
-            services.AddSingleton<ITelegramBotClient>(provider =>
-            {
-                var settings = provider.GetService<IOptions<TelegramSettings>>()!.Value;
+            services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName))
+                .Configure<SplitwiseSettings>(_configuration.GetSection(SplitwiseSettings.SectionName));
 
-                return new TelegramBotClient(settings.Token);
-            });
+            services.AddTelegram()
+                .AddSplitwise();
 
             services.AddScoped<MessageService>()
                 .AddScoped<CallbackQueryService, CallbackQueryService>()
@@ -54,13 +53,8 @@ namespace Bot
             {
                 quartzConfigurator.UseMicrosoftDependencyInjectionScopedJobFactory();
 
-                var jobKey = new JobKey(nameof(NotifierJob));
-
-                quartzConfigurator.AddJob<NotifierJob>(jobKey);
-
-                quartzConfigurator.AddTrigger(triggerConfigurator => triggerConfigurator.ForJob(jobKey)
-                    .WithIdentity(nameof(NotifierJob))
-                    .WithCronSchedule(_configuration[$"{QuartzSettings.SectionName}:{nameof(NotifierJob)}"]));
+                quartzConfigurator.AddCronJob<NotifierJob>(_configuration)
+                    .AddCronJob<SplitwiseExporterJob>(_configuration);
             });
 
             services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
