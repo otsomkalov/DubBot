@@ -33,6 +33,8 @@ namespace Bot
                 options.UseNpgsql(_configuration.GetConnectionString(DatabaseSettings.ConnectionStringName));
             });
 
+            services.AddApplicationInsightsTelemetry();
+
             services.Configure<TelegramSettings>(_configuration.GetSection(TelegramSettings.SectionName))
                 .Configure<SplitwiseSettings>(_configuration.GetSection(SplitwiseSettings.SectionName));
 
