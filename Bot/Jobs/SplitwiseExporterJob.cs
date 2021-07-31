@@ -56,6 +56,8 @@ namespace Bot.Jobs
                     userOwe += pricePerGram * takeout.Amount;
                 }
 
+                if (userOwe == decimal.Zero) continue;
+
                 createExpenseRequest.Payments.Add(new()
                 {
                     UserId = user.SplitwiseId,
@@ -73,13 +75,13 @@ namespace Bot.Jobs
 
                 if (result.IsFailed)
                 {
-                    _logger.LogError(string.Join('\n', result.Errors.Select(e => e.Message)));
+                    _logger.LogError("There are errors during creating expense: {Errors}", string.Join('\n', result.Errors.Select(e => e.Message)));
                 }
                 else
                 {
                     if (result.Value.Errors?.Base?.Any() == true)
                     {
-                        _logger.LogError(string.Join('\n', result.Value.Errors.Base));
+                        _logger.LogError("There are errors during creating expense: {Errors}", string.Join('\n', result.Value.Errors.Base));
                     }
                 }
             }
