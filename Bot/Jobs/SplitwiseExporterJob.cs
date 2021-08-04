@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bot.Extensions;
@@ -33,13 +34,7 @@ namespace Bot.Jobs
 
             var users = await _userService.ListAsync();
 
-            var createExpenseRequest = new UpsertExpenseRequest
-            {
-                Description = $"Дуб {sundayDate.Date}-{DateTime.Now.Date}",
-                CategoryId = 23,
-                CurrencyCode = "UAH",
-                Date = DateTime.Now
-            };
+            var payments = new List<PaymentRequest>();
 
             var cost = .0M;
 
@@ -56,9 +51,12 @@ namespace Bot.Jobs
                     userOwe += pricePerGram * takeout.Amount;
                 }
 
-                if (userOwe == decimal.Zero) continue;
+                if (userOwe == decimal.Zero)
+                {
+                    continue;
+                }
 
-                createExpenseRequest.Payments.Add(new()
+                payments.Add(new()
                 {
                     UserId = user.SplitwiseId,
                     OwedShare = userOwe
@@ -67,7 +65,20 @@ namespace Bot.Jobs
                 cost += userOwe;
             }
 
-            createExpenseRequest.Cost = cost;
+            if (cost == decimal.Zero)
+            {
+                return;
+            }
+
+            var createExpenseRequest = new UpsertExpenseRequest
+            {
+                Description = $"Дуб {sundayDate.Date}-{DateTime.Now.Date}",
+                CategoryId = 23,
+                CurrencyCode = "UAH",
+                Date = DateTime.Now,
+                Payments = payments,
+                Cost = cost
+            };
 
             try
             {
@@ -75,7 +86,8 @@ namespace Bot.Jobs
 
                 if (result.IsFailed)
                 {
-                    _logger.LogError("There are errors during creating expense: {Errors}", string.Join('\n', result.Errors.Select(e => e.Message)));
+                    _logger.LogError("There are errors during creating expense: {Errors}",
+                        string.Join('\n', result.Errors.Select(e => e.Message)));
                 }
                 else
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Bot.Extensions;
 using Bot.Helpers;
@@ -38,8 +39,12 @@ namespace Bot.Jobs
             {
                 var takeoutsSinceSunday = await _takeoutService.ListSinceAsync(user.Id, sundayDate);
 
-                await _bot.SendTextMessageAsync(
-                    new(user.Id),
+                if (!takeoutsSinceSunday.Any())
+                {
+                    continue;
+                }
+
+                await _bot.SendTextMessageAsync(new(user.Id),
                     _localizer.GetTakeoutsMessage(takeoutsSinceSunday),
                     ParseMode.Markdown);
             }
