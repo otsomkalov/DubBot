@@ -35,7 +35,7 @@ namespace Bot.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<User>> ListAsync()
+        public async Task<IReadOnlyCollection<User>> ListAsync()
         {
             return await _context.Users
                 .AsNoTracking()

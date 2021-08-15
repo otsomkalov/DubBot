@@ -6,6 +6,6 @@
 
         public string Token { get; set; }
 
-        public string AdminId { get; set; }
+        public int AdminId { get; set; }
     }
 }

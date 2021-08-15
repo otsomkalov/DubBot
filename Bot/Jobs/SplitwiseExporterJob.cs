@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Bot.Extensions;
 using Bot.Services;
+using Bot.Settings;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Quartz;
 using Splitwise.Clients.Interfaces;
 using Splitwise.Requests.Expense;
@@ -17,15 +19,17 @@ namespace Bot.Jobs
         private readonly ILogger<SplitwiseExporterJob> _logger;
         private readonly ISplitwiseClient _splitwiseClient;
         private readonly TakeoutService _takeoutService;
+        private readonly TelegramSettings _telegramSettings;
         private readonly UserService _userService;
 
         public SplitwiseExporterJob(ISplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
-            ILogger<SplitwiseExporterJob> logger)
+            ILogger<SplitwiseExporterJob> logger, IOptions<TelegramSettings> telegramSettings)
         {
             _splitwiseClient = splitwiseClient;
             _userService = userService;
             _takeoutService = takeoutService;
             _logger = logger;
+            _telegramSettings = telegramSettings.Value;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -46,7 +50,7 @@ namespace Bot.Jobs
 
                 foreach (var takeout in takeoutsSinceSunday)
                 {
-                    var pricePerGram = takeout.Order.Amount / takeout.Order.Price;
+                    var pricePerGram = takeout.Order.Price / takeout.Order.Amount;
 
                     userOwe += pricePerGram * takeout.Amount;
                 }
@@ -70,9 +74,17 @@ namespace Bot.Jobs
                 return;
             }
 
+            var adminUser = users.SingleOrDefault(u => u.Id == _telegramSettings.AdminId);
+
+            payments.Add(new()
+            {
+                UserId = adminUser.SplitwiseId,
+                PaidShare = cost
+            });
+
             var createExpenseRequest = new UpsertExpenseRequest
             {
-                Description = $"Дуб {sundayDate.Date}-{DateTime.Now.Date}",
+                Description = $"Дуб {sundayDate.Date:d}-{DateTime.Now.Date:d}",
                 CategoryId = 23,
                 CurrencyCode = "UAH",
                 Date = DateTime.Now,

@@ -53,7 +53,7 @@ namespace Bot.Services
 
             if (message.Text.StartsWith("/neworder", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (messageUser.Id.ToString() == _telegramSettings.AdminId)
+                if (messageUser.Id == _telegramSettings.AdminId)
                 {
                     var messageParts = message.Text.Split(" ");
 
@@ -61,8 +61,7 @@ namespace Bot.Services
                         !decimal.TryParse(messageParts[1], out var amount) ||
                         !decimal.TryParse(messageParts[2], out var price))
                     {
-                        await _bot.SendTextMessageAsync(
-                            new(messageUser.Id),
+                        await _bot.SendTextMessageAsync(new(messageUser.Id),
                             _localizer[ResourcesNames.WrongNewOrder]);
 
                         return;
