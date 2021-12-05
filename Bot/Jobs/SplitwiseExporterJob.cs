@@ -1,118 +1,110 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Bot.Extensions;
-using Bot.Services;
-using Bot.Settings;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
 using Splitwise.Clients.Interfaces;
 using Splitwise.Requests.Expense;
 
-namespace Bot.Jobs
+namespace Bot.Jobs;
+
+[DisallowConcurrentExecution]
+public class SplitwiseExporterJob : IJob
 {
-    [DisallowConcurrentExecution]
-    public class SplitwiseExporterJob : IJob
+    private readonly ILogger<SplitwiseExporterJob> _logger;
+    private readonly ISplitwiseClient _splitwiseClient;
+    private readonly TakeoutService _takeoutService;
+    private readonly TelegramSettings _telegramSettings;
+    private readonly UserService _userService;
+
+    public SplitwiseExporterJob(ISplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
+        ILogger<SplitwiseExporterJob> logger, IOptions<TelegramSettings> telegramSettings)
     {
-        private readonly ILogger<SplitwiseExporterJob> _logger;
-        private readonly ISplitwiseClient _splitwiseClient;
-        private readonly TakeoutService _takeoutService;
-        private readonly TelegramSettings _telegramSettings;
-        private readonly UserService _userService;
+        _splitwiseClient = splitwiseClient;
+        _userService = userService;
+        _takeoutService = takeoutService;
+        _logger = logger;
+        _telegramSettings = telegramSettings.Value;
+    }
 
-        public SplitwiseExporterJob(ISplitwiseClient splitwiseClient, UserService userService, TakeoutService takeoutService,
-            ILogger<SplitwiseExporterJob> logger, IOptions<TelegramSettings> telegramSettings)
+    public async Task Execute(IJobExecutionContext context)
+    {
+        var sundayDate = DateTime.Now.GetLastSunday();
+
+        var users = await _userService.ListAsync();
+
+        var payments = new List<PaymentRequest>();
+
+        var cost = .0M;
+
+        foreach (var user in users)
         {
-            _splitwiseClient = splitwiseClient;
-            _userService = userService;
-            _takeoutService = takeoutService;
-            _logger = logger;
-            _telegramSettings = telegramSettings.Value;
-        }
+            var takeoutsSinceSunday = await _takeoutService.ListSinceAsync(user.Id, sundayDate);
 
-        public async Task Execute(IJobExecutionContext context)
-        {
-            var sundayDate = DateTime.Now.GetLastSunday();
+            var userOwe = .0M;
 
-            var users = await _userService.ListAsync();
-
-            var payments = new List<PaymentRequest>();
-
-            var cost = .0M;
-
-            foreach (var user in users)
+            foreach (var takeout in takeoutsSinceSunday)
             {
-                var takeoutsSinceSunday = await _takeoutService.ListSinceAsync(user.Id, sundayDate);
+                var pricePerGram = takeout.Order.Price / takeout.Order.Amount;
 
-                var userOwe = .0M;
-
-                foreach (var takeout in takeoutsSinceSunday)
-                {
-                    var pricePerGram = takeout.Order.Price / takeout.Order.Amount;
-
-                    userOwe += pricePerGram * takeout.Amount;
-                }
-
-                if (userOwe == decimal.Zero)
-                {
-                    continue;
-                }
-
-                payments.Add(new()
-                {
-                    UserId = user.SplitwiseId,
-                    OwedShare = userOwe
-                });
-
-                cost += userOwe;
+                userOwe += pricePerGram * takeout.Amount;
             }
 
-            if (cost == decimal.Zero)
+            if (userOwe == decimal.Zero)
             {
-                return;
+                continue;
             }
-
-            var adminUser = users.SingleOrDefault(u => u.Id == _telegramSettings.AdminId);
 
             payments.Add(new()
             {
-                UserId = adminUser.SplitwiseId,
-                PaidShare = cost
+                UserId = user.SplitwiseId,
+                OwedShare = userOwe
             });
 
-            var createExpenseRequest = new UpsertExpenseRequest
-            {
-                Description = $"Дуб {sundayDate.Date:d}-{DateTime.Now.Date:d}",
-                CategoryId = 23,
-                CurrencyCode = "UAH",
-                Date = DateTime.Now,
-                Payments = payments,
-                Cost = cost
-            };
+            cost += userOwe;
+        }
 
-            try
-            {
-                var result = await _splitwiseClient.Expense.CreateAsync(createExpenseRequest);
+        if (cost == decimal.Zero)
+        {
+            return;
+        }
 
-                if (result.IsFailed)
+        var adminUser = users.Single(u => u.Id == _telegramSettings.AdminId);
+
+        payments.Add(new()
+        {
+            UserId = adminUser.SplitwiseId,
+            PaidShare = cost
+        });
+
+        var createExpenseRequest = new UpsertExpenseRequest
+        {
+            Description = $"Дуб {sundayDate.Date:d}-{DateTime.Now.Date:d}",
+            CategoryId = 23,
+            CurrencyCode = "UAH",
+            Date = DateTime.Now,
+            Payments = payments,
+            Cost = cost
+        };
+
+        try
+        {
+            var result = await _splitwiseClient.Expense.CreateAsync(createExpenseRequest);
+
+            if (result.IsFailed)
+            {
+                _logger.LogError("There are errors during creating expense: {Errors}",
+                    string.Join('\n', result.Errors.Select(e => e.Message)));
+            }
+            else
+            {
+                if (result.Value.Errors?.Base?.Any() == true)
                 {
-                    _logger.LogError("There are errors during creating expense: {Errors}",
-                        string.Join('\n', result.Errors.Select(e => e.Message)));
-                }
-                else
-                {
-                    if (result.Value.Errors?.Base?.Any() == true)
-                    {
-                        _logger.LogError("There are errors during creating expense: {Errors}", string.Join('\n', result.Value.Errors.Base));
-                    }
+                    _logger.LogError("There are errors during creating expense: {Errors}", string.Join('\n', result.Value.Errors.Base));
                 }
             }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error during creating expense:");
-            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error during creating expense:");
         }
     }
 }

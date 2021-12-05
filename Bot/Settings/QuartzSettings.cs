@@ -1,7 +1,6 @@
-﻿namespace Bot.Settings
+﻿namespace Bot.Settings;
+
+public class QuartzSettings
 {
-    public class QuartzSettings
-    {
-        public const string SectionName = "Quartz";
-    }
+    public const string SectionName = "Quartz";
 }

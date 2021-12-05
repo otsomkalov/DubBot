@@ -1,84 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Bot.Extensions;
-using Bot.Helpers;
-using Bot.Models;
+﻿using Bot.Extensions;
 using Bot.Resources;
 using Microsoft.Extensions.Localization;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace Bot.Services
+namespace Bot.Services;
+
+public class CallbackQueryService
 {
-    public class CallbackQueryService
+    private readonly ITelegramBotClient _bot;
+    private readonly IStringLocalizer<Messages> _localizer;
+    private readonly OrderService _orderService;
+    private readonly TakeoutService _takeoutService;
+
+    public CallbackQueryService(ITelegramBotClient bot, TakeoutService takeoutService,
+        IStringLocalizer<Messages> localizer, OrderService orderService)
     {
-        private readonly ITelegramBotClient _bot;
-        private readonly IStringLocalizer<Messages> _localizer;
-        private readonly OrderService _orderService;
-        private readonly TakeoutService _takeoutService;
+        _bot = bot;
+        _takeoutService = takeoutService;
+        _localizer = localizer;
+        _orderService = orderService;
+    }
 
-        public CallbackQueryService(ITelegramBotClient bot, TakeoutService takeoutService,
-            IStringLocalizer<Messages> localizer, OrderService orderService)
+    public async Task HandleAsync(CallbackQuery callbackQuery)
+    {
+        var callbackQueryUser = callbackQuery.From;
+        var sundayDate = DateTime.Now.GetLastSunday();
+
+        var amountToAdd = callbackQuery.Data switch
         {
-            _bot = bot;
-            _takeoutService = takeoutService;
-            _localizer = localizer;
-            _orderService = orderService;
-        }
+            Constants.PointFifteenCallbackQueryData => 0.15M,
+            Constants.QuarterCallbackQueryData => 0.25M,
+            Constants.HalfCallbackQueryData => 0.5M,
+            Constants.UnitCallbackQueryData => 1M,
+            _ => decimal.Zero
+        };
 
-        public async Task HandleAsync(CallbackQuery callbackQuery)
+        ICollection<Takeout> takeoutsSinceSunday;
+
+        if (amountToAdd == decimal.Zero)
         {
-            var callbackQueryUser = callbackQuery.From;
-            var sundayDate = DateTime.Now.GetLastSunday();
+            takeoutsSinceSunday = await _takeoutService.ListSinceAsync(callbackQueryUser.Id, sundayDate);
+            var latestForUser = takeoutsSinceSunday.LastOrDefault();
 
-            var amountToAdd = callbackQuery.Data switch
+            if (latestForUser == null)
             {
-                Constants.PointFifteenCallbackQueryData => 0.15M,
-                Constants.QuarterCallbackQueryData => 0.25M,
-                Constants.HalfCallbackQueryData => 0.5M,
-                Constants.UnitCallbackQueryData => 1M,
-                _ => decimal.Zero
-            };
-
-            ICollection<Takeout> takeoutsSinceSunday;
-
-            if (amountToAdd == decimal.Zero)
-            {
-                takeoutsSinceSunday = await _takeoutService.ListSinceAsync(callbackQueryUser.Id, sundayDate);
-                var latestForUser = takeoutsSinceSunday.LastOrDefault();
-
-                if (latestForUser == null)
-                {
-                    await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.NoExpenses]);
-                }
-                else
-                {
-                    await _takeoutService.RemoveAsync(latestForUser);
-
-                    await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Removed]);
-
-                    takeoutsSinceSunday.Remove(latestForUser);
-                }
+                await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.NoExpenses]);
             }
             else
             {
-                var lastOrder = await _orderService.GetLatestAsync();
+                await _takeoutService.RemoveAsync(latestForUser);
 
-                await _takeoutService.CreateAsync(callbackQueryUser.Id, amountToAdd, lastOrder.Id);
+                await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Removed]);
 
-                await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Recorded]);
-
-                takeoutsSinceSunday = await _takeoutService.ListSinceAsync(callbackQueryUser.Id, sundayDate);
+                takeoutsSinceSunday.Remove(latestForUser);
             }
-
-            await _bot.EditMessageTextAsync(new(callbackQueryUser.Id),
-                callbackQuery.Message.MessageId,
-                _localizer.GetTakeoutsMessage(takeoutsSinceSunday),
-                ParseMode.Markdown,
-                replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup());
         }
+        else
+        {
+            var lastOrder = await _orderService.GetLatestAsync();
+
+            await _takeoutService.CreateAsync(callbackQueryUser.Id, amountToAdd, lastOrder.Id);
+
+            await _bot.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer[ResourcesNames.Recorded]);
+
+            takeoutsSinceSunday = await _takeoutService.ListSinceAsync(callbackQueryUser.Id, sundayDate);
+        }
+
+        await _bot.EditMessageTextAsync(new(callbackQueryUser.Id),
+            callbackQuery.Message.MessageId,
+            _localizer.GetTakeoutsMessage(takeoutsSinceSunday),
+            ParseMode.Markdown,
+            replyMarkup: ReplyMarkupHelpers.GetAmountsMarkup());
     }
 }

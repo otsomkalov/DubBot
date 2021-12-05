@@ -1,47 +1,40 @@
-﻿using Bot.Models;
-using Telegram.Bot.Types.ReplyMarkups;
+﻿using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Bot.Helpers
+namespace Bot.Helpers;
+
+public static class ReplyMarkupHelpers
 {
-    public static class ReplyMarkupHelpers
+    public static InlineKeyboardMarkup GetAmountsMarkup()
     {
-        public static InlineKeyboardMarkup GetAmountsMarkup()
-        {
-            return new(
+        return new(
+            new[]
+            {
                 new[]
                 {
-                    new[]
+                    new InlineKeyboardButton("+0.15")
                     {
-                        new InlineKeyboardButton
-                        {
-                            Text = "+0.15",
-                            CallbackData = Constants.PointFifteenCallbackQueryData
-                        },
-                        new InlineKeyboardButton
-                        {
-                            Text = "+0.25",
-                            CallbackData = Constants.QuarterCallbackQueryData
-                        },
-                        new InlineKeyboardButton
-                        {
-                            Text = "+0.5",
-                            CallbackData = Constants.HalfCallbackQueryData
-                        },
-                        new InlineKeyboardButton
-                        {
-                            Text = "+1",
-                            CallbackData = Constants.UnitCallbackQueryData
-                        }
+                        CallbackData = Constants.PointFifteenCallbackQueryData
                     },
-                    new[]
+                    new InlineKeyboardButton("+0.25")
                     {
-                        new InlineKeyboardButton
-                        {
-                            Text = "Remove latest",
-                            CallbackData = Constants.RemoveLatestCallbackQueryData
-                        }
+                        CallbackData = Constants.QuarterCallbackQueryData
+                    },
+                    new InlineKeyboardButton("+0.5")
+                    {
+                        CallbackData = Constants.HalfCallbackQueryData
+                    },
+                    new InlineKeyboardButton("+1")
+                    {
+                        CallbackData = Constants.UnitCallbackQueryData
                     }
-                });
-        }
+                },
+                new[]
+                {
+                    new InlineKeyboardButton("Remove latest")
+                    {
+                        CallbackData = Constants.RemoveLatestCallbackQueryData
+                    }
+                }
+            });
     }
 }

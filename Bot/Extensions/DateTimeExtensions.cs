@@ -1,17 +1,14 @@
-﻿using System;
+﻿namespace Bot.Extensions;
 
-namespace Bot.Extensions
+public static class DateTimeExtensions
 {
-    public static class DateTimeExtensions
+    public static DateTime GetLastSunday(this DateTime dateTime)
     {
-        public static DateTime GetLastSunday(this DateTime dateTime)
-        {
-            dateTime = dateTime.Date;
+        dateTime = dateTime.Date;
 
-            var daysSinceSunday = dateTime.DayOfWeek - DayOfWeek.Sunday;
-            var sundayDate = dateTime.AddDays(-daysSinceSunday);
+        var daysSinceSunday = dateTime.DayOfWeek - DayOfWeek.Sunday;
+        var sundayDate = dateTime.AddDays(-daysSinceSunday);
 
-            return sundayDate;
-        }
+        return sundayDate;
     }
 }

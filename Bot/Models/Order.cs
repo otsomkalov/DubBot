@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Bot.Models;
 
-namespace Bot.Models
+public class Order : BaseEntity
 {
-    public class Order : BaseEntity
-    {
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+    public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
-        public decimal Amount { get; set; }
+    public decimal Amount { get; set; }
 
-        public decimal Price { get; set; }
+    public decimal Price { get; set; }
 
-        public virtual IEnumerable<Takeout> Takeouts { get; set; }
-    }
+    public virtual IEnumerable<Takeout> Takeouts { get; set; }
 }

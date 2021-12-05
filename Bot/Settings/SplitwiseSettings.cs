@@ -1,9 +1,8 @@
-﻿namespace Bot.Settings
-{
-    public class SplitwiseSettings
-    {
-        public const string SectionName = "Splitwise";
+﻿namespace Bot.Settings;
 
-        public string Key { get; set; }
-    }
+public class SplitwiseSettings
+{
+    public const string SectionName = "Splitwise";
+
+    public string Key { get; set; }
 }

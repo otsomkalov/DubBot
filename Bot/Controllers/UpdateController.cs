@@ -1,36 +1,33 @@
-﻿using System.Threading.Tasks;
-using Bot.Services;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace Bot.Controllers
+namespace Bot.Controllers;
+
+[Route("update")]
+public class UpdateController : ControllerBase
 {
-    [Route("update")]
-    public class UpdateController : ControllerBase
+    private readonly CallbackQueryService _callbackQueryService;
+    private readonly MessageService _messageService;
+
+    public UpdateController(MessageService messageService, CallbackQueryService callbackQueryService)
     {
-        private readonly CallbackQueryService _callbackQueryService;
-        private readonly MessageService _messageService;
+        _messageService = messageService;
+        _callbackQueryService = callbackQueryService;
+    }
 
-        public UpdateController(MessageService messageService, CallbackQueryService callbackQueryService)
+    public async Task<IActionResult> PostAsync([FromBody] Update update)
+    {
+        if (update.Type == UpdateType.Message)
         {
-            _messageService = messageService;
-            _callbackQueryService = callbackQueryService;
+            await _messageService.HandleAsync(update.Message);
         }
 
-        public async Task<IActionResult> PostAsync([FromBody] Update update)
+        if (update.Type == UpdateType.CallbackQuery)
         {
-            if (update.Type == UpdateType.Message)
-            {
-                await _messageService.HandleAsync(update.Message);
-            }
-
-            if (update.Type == UpdateType.CallbackQuery)
-            {
-                await _callbackQueryService.HandleAsync(update.CallbackQuery);
-            }
-
-            return Ok();
+            await _callbackQueryService.HandleAsync(update.CallbackQuery);
         }
+
+        return Ok();
     }
 }

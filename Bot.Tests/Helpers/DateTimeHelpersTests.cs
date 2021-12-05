@@ -2,24 +2,23 @@
 using Bot.Extensions;
 using Xunit;
 
-namespace Bot.Tests.Helpers
+namespace Bot.Tests.Helpers;
+
+public class DateTimeHelpersTests
 {
-    public class DateTimeHelpersTests
+    [Fact]
+    public void GetLastSunday_ShouldProduceCorrectDate()
     {
-        [Fact]
-        public void GetLastSunday_ShouldProduceCorrectDate()
-        {
-            // Arrange
+        // Arrange
 
-            var dateTime = new DateTime(2021, 06, 18, 1, 1, 1);
+        var dateTime = new DateTime(2021, 06, 18, 1, 1, 1);
 
-            // Act
+        // Act
 
-            var lastSunday = dateTime.GetLastSunday();
+        var lastSunday = dateTime.GetLastSunday();
 
-            // Assert
+        // Assert
 
-            Assert.Equal(new(2021, 06, 13), lastSunday);
-        }
+        Assert.Equal(new(2021, 06, 13), lastSunday);
     }
 }

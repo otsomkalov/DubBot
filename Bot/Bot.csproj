@@ -1,16 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.6"/>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.7"/>
-    <PackageReference Include="Telegram.Bot" Version="15.7.1"/>
-    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.3.2"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.1"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.0"/>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0"/>
+    <PackageReference Include="Telegram.Bot" Version="17.0.0"/>
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.3.3"/>
     <PackageReference Include="Splitwise" Version="0.0.3"/>
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.16.0"/>
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.19.0"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Bot.Helpers"/>
+    <Using Include="Bot.Models"/>
+    <Using Include="Bot.Services"/>
+    <Using Include="Bot.Settings"/>
   </ItemGroup>
 
   <ItemGroup>

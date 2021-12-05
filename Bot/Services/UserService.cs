@@ -1,45 +1,41 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Bot.Data;
-using Bot.Models;
+﻿using Bot.Data;
 using Microsoft.EntityFrameworkCore;
 using TG = Telegram.Bot.Types;
 
-namespace Bot.Services
+namespace Bot.Services;
+
+public class UserService
 {
-    public class UserService
+    private readonly AppDbContext _context;
+
+    public UserService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
+        _context = context;
+    }
 
-        public UserService(AppDbContext context)
+    public async Task CreateIfNotExistsAsync(TG.User user)
+    {
+        var userExists = await _context.Users.AnyAsync(u => u.Id == user.Id);
+
+        if (userExists)
         {
-            _context = context;
+            return;
         }
 
-        public async Task CreateIfNotExistsAsync(TG.User user)
+        await _context.AddAsync(new User
         {
-            var userExists = await _context.Users.AnyAsync(u => u.Id == user.Id);
+            Id = user.Id,
+            Username = user.Username,
+            FirstName = user.FirstName
+        });
 
-            if (userExists)
-            {
-                return;
-            }
+        await _context.SaveChangesAsync();
+    }
 
-            await _context.AddAsync(new User
-            {
-                Id = user.Id,
-                Username = user.Username,
-                FirstName = user.FirstName
-            });
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<IReadOnlyCollection<User>> ListAsync()
-        {
-            return await _context.Users
-                .AsNoTracking()
-                .ToListAsync();
-        }
+    public async Task<IReadOnlyCollection<User>> ListAsync()
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .ToListAsync();
     }
 }

@@ -1,32 +1,29 @@
-﻿using Bot.Settings;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Splitwise.Clients;
 using Splitwise.Clients.Interfaces;
 using Telegram.Bot;
 
-namespace Bot.Extensions
+namespace Bot.Extensions;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection AddTelegram(this IServiceCollection services)
     {
-        public static IServiceCollection AddTelegram(this IServiceCollection services)
+        return services.AddSingleton<ITelegramBotClient>(provider =>
         {
-            return services.AddSingleton<ITelegramBotClient>(provider =>
-            {
-                var settings = provider.GetRequiredService<IOptions<TelegramSettings>>().Value;
+            var settings = provider.GetRequiredService<IOptions<TelegramSettings>>().Value;
 
-                return new TelegramBotClient(settings.Token);
-            });
-        }
+            return new TelegramBotClient(settings.Token, baseUrl: settings.ApiUrl);
+        });
+    }
 
-        public static IServiceCollection AddSplitwise(this IServiceCollection services)
+    public static IServiceCollection AddSplitwise(this IServiceCollection services)
+    {
+        return services.AddSingleton<ISplitwiseClient>(provider =>
         {
-            return services.AddSingleton<ISplitwiseClient>(provider =>
-            {
-                var settings = provider.GetRequiredService<IOptions<SplitwiseSettings>>().Value;
+            var settings = provider.GetRequiredService<IOptions<SplitwiseSettings>>().Value;
 
-                return new SplitwiseClient(settings.Key);
-            });
-        }
+            return new SplitwiseClient(settings.Key);
+        });
     }
 }
